@@ -1,4 +1,4 @@
-name: Unzip uploaded file
+push: Auto Unzip Zip File
 
 on:
   push:
@@ -8,8 +8,13 @@ on:
 jobs:
   unzip:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Install unzip
+        run: sudo apt-get install unzip
 
       - name: Unzip all zip files
         run: |
@@ -19,8 +24,8 @@ jobs:
 
       - name: Commit unzipped files
         run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git add ./unzipped
-          git commit -m "Auto-unzipped uploaded zip files"
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          git add unzipped
+          git commit -m "Auto unzipped zip files"
           git push
