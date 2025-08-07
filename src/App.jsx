@@ -83,7 +83,8 @@ function App() {
     setInstituteData(null)
 
     try {
-      const response = await fetch(`http://202.72.235.218:8082/api/v1/institute/list?eiinNo=${eiinNumber.trim()}`)
+      // Use the Netlify Function endpoint
+      const response = await fetch(`/.netlify/functions/getInstitute?eiinNo=${eiinNumber.trim()}`)
       const data = await response.json()
 
       if (data.status === 'success' && data.data && data.data.length > 0) {
