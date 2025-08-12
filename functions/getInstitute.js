@@ -1,60 +1,89 @@
-const https = require("https");
+const http = require("http");
 
-exports.handler = async function(event, context) {
-  const eiinNo = event.queryStringParameters.eiinNo;
+exports.handler = async function (event, context) {
+  // Allow OPTIONS requests for CORS preflight
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+      },
+      body: ""
+    };
+  }
+
+  const eiinNo = event.queryStringParameters?.eiinNo;
+  if (!eiinNo) {
+    return {
+      statusCode: 400,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+      },
+      body: JSON.stringify({ error: "Missing 'eiinNo' query parameter." })
+    };
+  }
+
   const API_HOST = "202.72.235.218";
   const API_PATH = `/api/v1/institute/list?eiinNo=${eiinNo}`;
 
-  return new Promise((resolve, reject) => {
-    const request = https.get({
-      hostname: API_HOST,
-      port: 8082,
-      path: API_PATH,
-      method: "GET",
-    }, (response) => {
-      let data = "";
+  return new Promise((resolve) => {
+    const request = http.get(
+      {
+        hostname: API_HOST,
+        port: 8082,
+        path: API_PATH,
+        method: "GET",
+      },
+      (response) => {
+        let data = "";
 
-      response.on("data", (chunk) => {
-        data += chunk;
-      });
+        response.on("data", (chunk) => {
+          data += chunk;
+        });
 
-      response.on("end", () => {
-        try {
-          const parsedData = JSON.parse(data);
-          resolve({
-            statusCode: 200,
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
-              "Access-Control-Allow-Methods": "GET, POST, OPTION"
-            },
-            body: JSON.stringify(parsedData)
-          });
-        } catch (e) {
-          reject({
-            statusCode: 500,
-            headers: {
-              "Access-Control-Allow-Origin": "*",
-              "Access-Control-Allow-Headers": "Content-Type",
-              "Access-Control-Allow-Methods": "GET, POST, OPTION"
-            },
-            body: JSON.stringify({ error: "Failed to parse API response." })
-          });
-        }
-      });
-    });
+        response.on("end", () => {
+          try {
+            const parsedData = JSON.parse(data);
+            resolve({
+              statusCode: 200,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+              },
+              body: JSON.stringify(parsedData)
+            });
+          } catch (e) {
+            resolve({
+              statusCode: 500,
+              headers: {
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
+              },
+              body: JSON.stringify({ error: "Failed to parse API response." })
+            });
+          }
+        });
+      }
+    );
 
     request.on("error", (error) => {
-      reject({
+      resolve({
         statusCode: 500,
         headers: {
           "Access-Control-Allow-Origin": "*",
           "Access-Control-Allow-Headers": "Content-Type",
-          "Access-Control-Allow-Methods": "GET, POST, OPTION"
+          "Access-Control-Allow-Methods": "GET, POST, OPTIONS"
         },
-        body: JSON.stringify({ error: `Failed to fetch data from external API: ${error.message}` })
+        body: JSON.stringify({
+          error: `Failed to fetch data from external API: ${error.message}`
+        })
       });
     });
   });
 };
-
